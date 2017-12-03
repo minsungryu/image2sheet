@@ -17,13 +17,15 @@ if (!(program.src && program.output)) {
 
 let pending = 0
 let csvData = '\n,,,,,Latitude,Longitude,Date,,Directory\n'
+const isWin = process.platform === 'win32'
+const splitter = isWin ? '\\' : '/'
+const start_dir = program.src.split(splitter).slice(-1)[0]
 const image_filenames = traversal(path.resolve(program.src))
-const start_dir = program.src.split('/').slice(-1)[0]
 
 image_filenames.forEach(filename => {
   extractImageData(filename)
   .then(([timestamp, lat, long]) => {
-    const filepath_arr = filename.split('/')
+    const filepath_arr = filename.split(splitter)
     const index_of_start = filepath_arr.indexOf(start_dir)
     const sliced_filepath = filepath_arr.slice(index_of_start).join('","')
     csvData += `,,,,,"${lat}","${long}",${timestamp},,"${sliced_filepath}"\n`
@@ -53,7 +55,7 @@ function traversal(dir) {
 
 function extractImageData(filename) {
   return new Promise((resolve, reject) => {
-    if (/.+\.jpe?g/gi.test(filename.split('/').slice(-1))) {
+    if (/.+\.jpe?g/gi.test(filename.split(splitter).slice(-1))) {
       pending += 1
       new ExifImage({ image: filename }, function (error, exifData) {
         if (error) {
